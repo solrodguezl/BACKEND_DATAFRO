@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 
+const errorMiddleware =
+    require('./middleware/errorMiddleware');
+
 const authRoutes =
     require('./routes/authRoutes');
 const usuariosRoutes =
@@ -35,5 +38,8 @@ app.use(
     '/api/usuarios',
     usuariosRoutes
 );
+
+// Error handler
+app.use(errorMiddleware);
 
 module.exports = app;

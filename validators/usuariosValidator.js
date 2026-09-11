@@ -5,6 +5,7 @@ const idParamSchema = z.object({
 });
 
 const crearUsuarioSchema = z.object({
+    
     body: z.object({
         documento: z
             .string()

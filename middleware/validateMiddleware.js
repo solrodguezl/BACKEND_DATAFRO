@@ -16,12 +16,16 @@ const validate = (schema) => {
 
         if (!result.success) {
             const errors = result.error.issues.map((issue) => ({
-                campo: issue.path.join('.'),
+                campo: issue.path.at(-1),
                 mensaje: issue.message,
             }));
 
             return next(
-                new AppError('Datos de entrada inválidos', 400)
+                new AppError(
+                    'Hay errores en los datos enviados',
+                    400,
+                    errors
+                )
             );
         }
 

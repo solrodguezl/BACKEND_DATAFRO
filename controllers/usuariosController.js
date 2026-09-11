@@ -5,6 +5,7 @@ const usuariosService =
  * POST /api/usuarios
  */
 const crearUsuario = async (req, res, next) => {
+    console.log("creando usuario"); 
     try {
         const { documento, clave } = req.body;
 

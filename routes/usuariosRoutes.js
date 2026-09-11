@@ -27,6 +27,7 @@ const {
 router.post(
     '/',
     validate(crearUsuarioSchema),
+    
     crearUsuario
 );
 
