@@ -1,7 +1,9 @@
 const { z } = require('zod');
 
+const uuidSchema = z.string().uuid();
+
 const idParamSchema = z.object({
-    id: z.coerce.number().int().positive(),
+    id: uuidSchema,
 });
 
 const crearUsuarioSchema = z.object({
@@ -24,28 +26,31 @@ const crearUsuarioSchema = z.object({
 
 const actualizarUsuarioSchema = z.object({
     body: z.object({
+        id: uuidSchema.optional(),
         activo: z.boolean(),
-    }),
+    }).passthrough(),
 
-    params: idParamSchema,
+    params: z.object({
+        id: uuidSchema.optional(),
+    }).passthrough(),
 
     query: z.object({}),
 });
 
 const obtenerUsuarioSchema = z.object({
-    body: z.object({}),
+    body: z.object({}).passthrough().optional(),
 
     params: idParamSchema,
 
-    query: z.object({}),
+    query: z.object({}).passthrough().optional(),
 });
 
 const eliminarUsuarioSchema = z.object({
-    body: z.object({}),
+    body: z.object({}).passthrough().optional(),
 
     params: idParamSchema,
 
-    query: z.object({}),
+    query: z.object({}).passthrough().optional(),
 });
 
 module.exports = {

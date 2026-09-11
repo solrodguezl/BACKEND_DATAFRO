@@ -8,10 +8,14 @@ const AppError = require('../utils/AppError');
  */
 const validate = (schema) => {
     return (req, res, next) => {
+        const safeBody = req.body ?? {};
+        const safeParams = req.params ?? {};
+        const safeQuery = req.query ?? {};
+
         const result = schema.safeParse({
-            body: req.body,
-            params: req.params,
-            query: req.query,
+            body: safeBody,
+            params: safeParams,
+            query: safeQuery,
         });
 
         if (!result.success) {
@@ -29,9 +33,9 @@ const validate = (schema) => {
             );
         }
 
-        req.body = result.data.body;
-        req.params = result.data.params;
-        req.query = result.data.query;
+        req.body = result.data.body ?? {};
+        req.params = result.data.params ?? {};
+        req.query = result.data.query ?? {};
 
         next();
     };

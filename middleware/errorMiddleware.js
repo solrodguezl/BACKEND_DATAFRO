@@ -4,8 +4,6 @@ const AppError = require('../utils/AppError');
  * Middleware para manejar errores de la aplicación.
  */
 const errorMiddleware = (error, req, res, next) => {
-    console.error(error);
-
     if (error instanceof AppError) {
         return res.status(error.statusCode).json({
             error: error.message,
@@ -14,6 +12,8 @@ const errorMiddleware = (error, req, res, next) => {
             }),
         });
     }
+
+    console.error(error);
 
     // PostgreSQL: unique violation
     if (error.code === '23505') {

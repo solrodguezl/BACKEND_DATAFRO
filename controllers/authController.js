@@ -6,7 +6,7 @@ const authService =
  */
 const login = async (req, res, next) => {
     try {
-        const { correo, clave } = req.body;
+        const { documento, clave } = req.body;
 
         const infoDispositivo =
             req.headers['user-agent'] || null;
@@ -16,7 +16,7 @@ const login = async (req, res, next) => {
 
         const resultado =
             await authService.login({
-                correo,
+                documento,
                 clave,
                 infoDispositivo,
                 direccionIp,
@@ -55,7 +55,9 @@ const logout = async (req, res, next) => {
 
         await authService.logout(refreshToken);
 
-        return res.status(204).send();
+        return res.status(200).json({
+            mensaje: 'Sesión cerrada correctamente',
+        });
     } catch (error) {
         next(error);
     }
