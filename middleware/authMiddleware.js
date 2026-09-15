@@ -1,10 +1,11 @@
 const AppError = require('../utils/AppError');
 const { verificarAccessToken } = require('../utils/jwt');
+const sesionesRepository = require('../repositories/sesionesRepository');
 
 /**
  * Middleware que verifica el JWT enviado por el cliente.
  */
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
     const authorization = req.headers.authorization;
 
     if (!authorization) {
@@ -24,9 +25,24 @@ const authenticate = (req, res, next) => {
     try {
         const payload = verificarAccessToken(token);
 
-        req.user = payload;
+        if (!payload || !payload.sub) {
+            return next(
+                new AppError('Token inválido o expirado', 401)
+            );
+        }
 
-        next();
+        const sesionActiva = await sesionesRepository.buscarActivaPorUsuarioId(
+            payload.sub
+        );
+
+        if (!sesionActiva) {
+            return next(
+                new AppError('Token inválido o expirado', 401)
+            );
+        }
+
+        req.user = payload;
+        return next();
     } catch (error) {
         return next(
             new AppError('Token inválido o expirado', 401)

@@ -8,26 +8,34 @@ const AppError = require('../utils/AppError');
  */
 const validate = (schema) => {
     return (req, res, next) => {
+        const safeBody = req.body ?? {};
+        const safeParams = req.params ?? {};
+        const safeQuery = req.query ?? {};
+
         const result = schema.safeParse({
-            body: req.body,
-            params: req.params,
-            query: req.query,
+            body: safeBody,
+            params: safeParams,
+            query: safeQuery,
         });
 
         if (!result.success) {
             const errors = result.error.issues.map((issue) => ({
-                campo: issue.path.join('.'),
+                campo: issue.path.at(-1),
                 mensaje: issue.message,
             }));
 
             return next(
-                new AppError('Datos de entrada inválidos', 400)
+                new AppError(
+                    'Hay errores en los datos enviados',
+                    400,
+                    errors
+                )
             );
         }
 
-        req.body = result.data.body;
-        req.params = result.data.params;
-        req.query = result.data.query;
+        req.body = result.data.body ?? {};
+        req.params = result.data.params ?? {};
+        req.query = result.data.query ?? {};
 
         next();
     };

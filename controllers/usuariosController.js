@@ -5,6 +5,7 @@ const usuariosService =
  * POST /api/usuarios
  */
 const crearUsuario = async (req, res, next) => {
+    console.log("creando usuario"); 
     try {
         const { documento, clave } = req.body;
 
@@ -51,7 +52,7 @@ const obtenerUsuario = async (req, res, next) => {
 };
 
 /**
- * PUT /api/usuarios/:id
+ * PUT /api/usuarios/:id_usuario
  */
 const actualizarUsuario = async (
     req,
@@ -59,11 +60,13 @@ const actualizarUsuario = async (
     next
 ) => {
     try {
-        const { activo } = req.body;
+        const { activo, id: idBody } = req.body;
+        const id = req.params.id ?? idBody;
+
 
         const usuario =
             await usuariosService.actualizarUsuario(
-                req.params.id,
+                id,
                 activo
             );
 
@@ -86,7 +89,10 @@ const eliminarUsuario = async (
             req.params.id
         );
 
-        return res.status(204).send();
+        return res.status(200).json({
+            mensaje: 'Usuario eliminado correctamente',
+            id: req.params.id,
+        });
     } catch (error) {
         next(error);
     }

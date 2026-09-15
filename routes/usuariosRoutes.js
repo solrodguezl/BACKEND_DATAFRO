@@ -27,6 +27,7 @@ const {
 router.post(
     '/',
     validate(crearUsuarioSchema),
+
     crearUsuario
 );
 
@@ -44,7 +45,7 @@ router.get(
 );
 
 router.put(
-    '/:id',
+    ['/:id', '/'],
     authenticate,
     validate(actualizarUsuarioSchema),
     actualizarUsuario

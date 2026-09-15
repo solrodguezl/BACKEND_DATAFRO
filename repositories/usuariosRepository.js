@@ -21,13 +21,22 @@ const buscarPorDocumento = async (documento) => {
     `;
 
     const result = await pool.query(query, [documento]);
-    return result.rows[0];
+    const usuario = result.rows[0];
+
+    if (!usuario) {
+        return undefined;
+    }
+
+    return {
+        ...usuario,
+        id: usuario.id_usuario,
+    };
 };
 
 /**
  * Busca un usuario por ID.
  *
- * @param {number} id_usuario
+ * @param {string} id_usuario
  * @returns {Promise<object|undefined>}
  */
 const buscarPorId = async (id) => {
@@ -38,14 +47,22 @@ const buscarPorId = async (id) => {
             activo,
             fecha_creacion,
             fecha_actualizacion
-        FROM usuarios
-        WHERE id = $1
+        FROM usuario
+        WHERE id_usuario = $1
         LIMIT 1
     `;
 
     const result = await pool.query(query, [id]);
+    const usuario = result.rows[0];
 
-    return result.rows[0];
+    if (!usuario) {
+        return undefined;
+    }
+
+    return {
+        ...usuario,
+        id: usuario.id_usuario,
+    };
 };
 
 /**
@@ -61,7 +78,7 @@ const obtenerTodos = async () => {
             activo,
             fecha_creacion,
             fecha_actualizacion
-        FROM usuarios
+        FROM usuario
         ORDER BY id_usuario ASC
     `;
 
@@ -97,7 +114,16 @@ const crear = async (documento, claveHash) => {
         claveHash,
     ]);
 
-    return result.rows[0];
+    const usuario = result.rows[0];
+
+    if (!usuario) {
+        return undefined;
+    }
+
+    return {
+        ...usuario,
+        id: usuario.id_usuario,
+    };
 };
 
 /**
@@ -107,9 +133,9 @@ const crear = async (documento, claveHash) => {
  * @param {boolean} activo
  * @returns {Promise<object|undefined>}
  */
-const actualizarActivo = async (id_usuario, activo) => {
+const actualizarActivo = async (id, activo) => {
     const query = `
-        UPDATE usuarios
+        UPDATE usuario
         SET
             activo = $1,
             fecha_actualizacion = CURRENT_TIMESTAMP
@@ -123,10 +149,19 @@ const actualizarActivo = async (id_usuario, activo) => {
 
     const result = await pool.query(query, [
         activo,
-        id_usuario,
+        id,
     ]);
 
-    return result.rows[0];
+    const usuario = result.rows[0];
+
+    if (!usuario) {
+        return undefined;
+    }
+
+    return {
+        ...usuario,
+        id: usuario.id_usuario,
+    };
 };
 
 /**
@@ -137,7 +172,7 @@ const actualizarActivo = async (id_usuario, activo) => {
  */
 const eliminar = async (id_usuario) => {
     const query = `
-        DELETE FROM usuarios
+        DELETE FROM usuario
         WHERE id_usuario = $1
         RETURNING id_usuario
     `;

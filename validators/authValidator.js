@@ -2,10 +2,10 @@ const { z } = require('zod');
 
 const loginSchema = z.object({
     body: z.object({
-        correo: z
+        documento: z
             .string()
             .trim()
-            .email('El correo no es válido'),
+            .min(8, 'El documento debe tener al menos 8 caracteres'),
 
         clave: z
             .string()
