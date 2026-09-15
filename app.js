@@ -6,6 +6,9 @@ const errorMiddleware =
 
 const authRoutes =
     require('./routes/authRoutes');
+
+    const perfilesRoutes =
+    require('./routes/perfilesRoutes');
 const usuariosRoutes =
     require('./routes/usuariosRoutes');
 
@@ -32,6 +35,11 @@ app.get('/health', (req, res) => {
 app.use(
     '/api/auth',
     authRoutes
+);
+
+app.use(
+    '/api/perfiles',
+    perfilesRoutes
 );
 
 app.use(
