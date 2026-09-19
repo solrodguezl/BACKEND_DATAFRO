@@ -4,8 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../config/db');
 
-// perfiles.sql (tabla base) ya existe en tu base y no es idempotente, por eso no se vuelve a ejecutar.
-const ARCHIVOS = ['asistir_schema.sql'];
+// Se ejecutan en orden y todos son idempotentes: en una base que ya existe no rompen nada.
+const ARCHIVOS = ['esquema_base.sql', 'base_inicial.sql', 'asistir_schema.sql'];
 
 const run = async () => {
     for (const archivo of ARCHIVOS) {

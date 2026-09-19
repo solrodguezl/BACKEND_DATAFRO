@@ -1,0 +1,20 @@
+# Blueprint de Render para el backend. Las variables con sync:false se escriben en el panel de Render.
+services:
+  - type: web
+    name: datafro-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: BCRYPT_SALT_ROUNDS
+        value: 12

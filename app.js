@@ -22,6 +22,9 @@ const {
 
 const app = express();
 
+// Detrás del proxy de Render/Neon-hosting, req.ip debe ser la IP real del cliente.
+app.set('trust proxy', 1);
+
 app.use(
     cors()
 );
