@@ -40,4 +40,14 @@ const actualizar = async (req, res, next) => {
     }
 };
 
-module.exports = { yo, listar, crear, actualizar };
+const resumen = async (req, res, next) => {
+    try {
+        res.json(
+            await miembrosService.resumenActividad(req.membresia, req.params.id)
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { yo, listar, crear, actualizar, resumen };

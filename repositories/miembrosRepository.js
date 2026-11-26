@@ -192,4 +192,73 @@ const actualizar = async (
     }
 };
 
-module.exports = { listarPorOrganizacion, obtener, crear, actualizar };
+/**
+ * Resumen de actividad de un miembro dentro de su organización, para el
+ * panel de perfil del administrador: cuántas asistencias ha registrado
+ * (asistencia.id_usuario), cuántas actividades ha creado/es responsable
+ * (actividad.id_usuario_responsable), el promedio de asistentes de esas
+ * actividades y la fecha de la más reciente. Son cifras reales de lo que
+ * este usuario ha hecho en el sistema, no una asistencia personal suya (eso
+ * es un concepto de `persona`, no de `usuario`).
+ */
+const obtenerResumenActividad = async (organizacionId, usuarioId) => {
+    const resumen = await pool.query(
+        `
+        SELECT
+            (SELECT COUNT(*)::int FROM asistencia s
+             JOIN actividad a ON a.id_actividad = s.id_actividad
+             WHERE a.id_organizacion = $1 AND s.id_usuario = $2
+            ) AS total_asistencias_registradas,
+            (SELECT COUNT(*)::int FROM actividad
+             WHERE id_organizacion = $1 AND id_usuario_responsable = $2
+            ) AS actividades_creadas,
+            (SELECT to_char(MAX(fecha), 'YYYY-MM-DD') FROM actividad
+             WHERE id_organizacion = $1 AND id_usuario_responsable = $2
+            ) AS ultima_actividad_fecha,
+            (SELECT COALESCE(ROUND(AVG(sub.total), 1), 0) FROM (
+                SELECT COUNT(s.id_asistencia) AS total
+                FROM actividad a
+                LEFT JOIN asistencia s ON s.id_actividad = a.id_actividad
+                WHERE a.id_organizacion = $1 AND a.id_usuario_responsable = $2
+                GROUP BY a.id_actividad
+            ) sub) AS promedio_asistentes
+        `,
+        [organizacionId, usuarioId]
+    );
+
+    const actividadesRecientes = await pool.query(
+        `
+        SELECT
+            a.id_actividad,
+            a.nombre,
+            to_char(a.fecha, 'YYYY-MM-DD') AS fecha,
+            a.lugar AS barrio,
+            COUNT(s.id_asistencia)::int AS total_asistentes
+        FROM actividad a
+        LEFT JOIN asistencia s ON s.id_actividad = a.id_actividad
+        WHERE a.id_organizacion = $1 AND a.id_usuario_responsable = $2
+        GROUP BY a.id_actividad
+        ORDER BY a.fecha DESC, a.nombre
+        LIMIT 10
+        `,
+        [organizacionId, usuarioId]
+    );
+
+    const fila = resumen.rows[0];
+
+    return {
+        totalAsistenciasRegistradas: fila.total_asistencias_registradas,
+        actividadesCreadas: fila.actividades_creadas,
+        promedioAsistentes: Number(fila.promedio_asistentes),
+        ultimaActividadFecha: fila.ultima_actividad_fecha,
+        actividadesRecientes: actividadesRecientes.rows,
+    };
+};
+
+module.exports = {
+    listarPorOrganizacion,
+    obtener,
+    crear,
+    actualizar,
+    obtenerResumenActividad,
+};

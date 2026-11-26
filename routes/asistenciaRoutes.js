@@ -2,7 +2,7 @@ const express = require('express');
 
 const controller = require('../controllers/asistenciaController');
 const { authenticate } = require('../middleware/authMiddleware');
-const { cargarMembresia } = require('../middleware/membresiaMiddleware');
+const { cargarMembresia, requerirRol } = require('../middleware/membresiaMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const {
     buscarPersonaSchema,
@@ -26,7 +26,13 @@ const actividadesRouter = express.Router();
 
 actividadesRouter.use(authenticate, cargarMembresia);
 actividadesRouter.get('/', controller.listarActividades);
-actividadesRouter.post('/', validate(crearActividadSchema), controller.crearActividad);
+// Crear actividades: COORDINADOR+ (el GESTOR solo registra asistencia en las ya creadas).
+actividadesRouter.post(
+    '/',
+    requerirRol('COORDINADOR', 'DIRECTOR'),
+    validate(crearActividadSchema),
+    controller.crearActividad
+);
 actividadesRouter.get('/:id', validate(obtenerActividadSchema), controller.obtenerActividad);
 actividadesRouter.post(
     '/:id/asistencias',

@@ -15,10 +15,18 @@ const miembrosRoutes =
     require('./routes/miembrosRoutes');
 const catalogosRoutes =
     require('./routes/catalogosRoutes');
+const caracterizacionRoutes =
+    require('./routes/caracterizacionRoutes');
+const {
+    solicitudesRouter,
+    adminRouter,
+} = require('./routes/solicitudesRolRoutes');
 const {
     personasRouter,
     actividadesRouter,
 } = require('./routes/asistenciaRoutes');
+const organizacionesRoutes =
+    require('./routes/organizacionesRoutes');
 
 const app = express();
 
@@ -60,8 +68,12 @@ app.use(
 
 app.use('/api/miembros', miembrosRoutes);
 app.use('/api/catalogos', catalogosRoutes);
+app.use('/api/caracterizacion', caracterizacionRoutes);
+app.use('/api/solicitudes-rol', solicitudesRouter);
+app.use('/api/admin/solicitudes-rol', adminRouter);
 app.use('/api/personas', personasRouter);
 app.use('/api/actividades', actividadesRouter);
+app.use('/api/admin/organizaciones', organizacionesRoutes);
 
 // Error handler
 app.use(errorMiddleware);

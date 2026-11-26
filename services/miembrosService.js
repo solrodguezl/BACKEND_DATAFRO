@@ -3,8 +3,16 @@ const bcrypt = require('bcrypt');
 const miembrosRepository = require('../repositories/miembrosRepository');
 const usuariosRepository = require('../repositories/usuariosRepository');
 const AppError = require('../utils/AppError');
+const { NIVEL_ROL } = require('../utils/catalogos');
+
+// Nivel de quien hace la operación: viene de membresia.nivel (columna real
+// rol.nivel) si está disponible, y si no de NIVEL_ROL por nombre de rol —
+// cubre tanto cargarMembresia (own-org) como la membresía simulada que arma
+// el panel del administrador para gestionar cualquier organización.
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS || 12);
+
+const nivelDe = (membresia) => membresia.nivel ?? NIVEL_ROL[membresia.rol] ?? null;
 
 const yo = async (membresia) => {
     const miembro = await miembrosRepository.obtener(
@@ -36,6 +44,18 @@ const listar = async (membresia) => {
 };
 
 const crear = async (membresia, data) => {
+    const nivelCreador = nivelDe(membresia);
+
+    // Jerarquía (HU-03): solo se puede crear un perfil con un rol de nivel
+    // estrictamente menor al propio — un DIRECTOR no puede crear otro
+    // DIRECTOR, un COORDINADOR no puede crear otro COORDINADOR ni un DIRECTOR.
+    if (!nivelCreador || NIVEL_ROL[data.rol] >= nivelCreador) {
+        throw new AppError(
+            'No puedes crear un perfil con un rol igual o superior al tuyo',
+            403
+        );
+    }
+
     const existente = await usuariosRepository.buscarPorDocumento(data.documento);
 
     if (existente) {
@@ -75,6 +95,18 @@ const actualizar = async (membresia, id, data) => {
         if (data.activo === false) {
             throw new AppError('No puedes desactivar tu propio usuario', 400);
         }
+    } else {
+        const nivelCreador = nivelDe(membresia);
+
+        // Jerarquía (HU-03): no se puede tocar a alguien de tu mismo nivel o
+        // superior, ni asignarle un rol igual o superior al tuyo.
+        if (!nivelCreador || NIVEL_ROL[miembro.rol] >= nivelCreador) {
+            throw new AppError('No tienes permiso para modificar a este miembro', 403);
+        }
+
+        if (NIVEL_ROL[data.rol] >= nivelCreador) {
+            throw new AppError('No puedes asignar un rol igual o superior al tuyo', 403);
+        }
     }
 
     const claveHash = data.clave
@@ -93,4 +125,24 @@ const actualizar = async (membresia, id, data) => {
     return miembrosRepository.obtener(membresia.organizacion_id, id);
 };
 
-module.exports = { yo, listar, crear, actualizar };
+/**
+ * Resumen de actividad de un miembro (para el panel de perfil): cuántas
+ * asistencias ha registrado, cuántas actividades ha creado, promedio de
+ * asistentes y la más reciente.
+ */
+const resumenActividad = async (membresia, id) => {
+    const miembro = await miembrosRepository.obtener(membresia.organizacion_id, id);
+
+    if (!miembro) {
+        throw new AppError('Miembro no encontrado', 404);
+    }
+
+    const resumen = await miembrosRepository.obtenerResumenActividad(
+        membresia.organizacion_id,
+        id
+    );
+
+    return { miembro, resumen };
+};
+
+module.exports = { yo, listar, crear, actualizar, resumenActividad };

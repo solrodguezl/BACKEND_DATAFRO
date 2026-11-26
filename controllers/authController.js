@@ -63,8 +63,19 @@ const logout = async (req, res, next) => {
     }
 };
 
+/**
+ * GET /api/auth/me
+ * Sesión del usuario autenticado: rol, nivel, organización (si tiene) y permisos.
+ * No exige organización (a diferencia de /miembros/yo): la usa alguien recién
+ * registrado, sin organización todavía, para saber qué puede hacer.
+ */
+const me = (req, res) => {
+    res.json(req.sesion);
+};
+
 module.exports = {
     login,
     refresh,
     logout,
+    me,
 };
