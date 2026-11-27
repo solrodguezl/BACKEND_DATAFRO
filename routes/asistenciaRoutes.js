@@ -4,6 +4,7 @@ const controller = require('../controllers/asistenciaController');
 const { authenticate } = require('../middleware/authMiddleware');
 const { cargarMembresia, requerirRol } = require('../middleware/membresiaMiddleware');
 const validate = require('../middleware/validateMiddleware');
+const { idempotente } = require('../middleware/idempotenciaMiddleware');
 const {
     buscarPersonaSchema,
     crearActividadSchema,
@@ -30,12 +31,14 @@ actividadesRouter.get('/', controller.listarActividades);
 actividadesRouter.post(
     '/',
     requerirRol('COORDINADOR', 'DIRECTOR'),
+    idempotente,
     validate(crearActividadSchema),
     controller.crearActividad
 );
 actividadesRouter.get('/:id', validate(obtenerActividadSchema), controller.obtenerActividad);
 actividadesRouter.post(
     '/:id/asistencias',
+    idempotente,
     validate(registrarAsistenciaSchema),
     controller.registrarAsistencia
 );

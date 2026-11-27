@@ -6,6 +6,7 @@ const controller = require('../controllers/caracterizacionController');
 const { authenticate } = require('../middleware/authMiddleware');
 const { cargarMembresia } = require('../middleware/membresiaMiddleware');
 const validate = require('../middleware/validateMiddleware');
+const { idempotente } = require('../middleware/idempotenciaMiddleware');
 const {
     buscarPersonaSchema,
     guardarCaracterizacionSchema,
@@ -33,6 +34,7 @@ router.get(
 // POST /api/caracterizacion  (guarda persona + respuestas; borrador o completo)
 router.post(
     '/',
+    idempotente,
     validate(guardarCaracterizacionSchema),
     controller.guardarCaracterizacion
 );
