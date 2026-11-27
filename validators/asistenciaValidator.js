@@ -23,6 +23,9 @@ const buscarPersonaSchema = z.object({
 
 const crearActividadSchema = z.object({
     body: z.object({
+        // UUID generado en el teléfono cuando la actividad se crea sin conexión;
+        // las asistencias registradas offline ya lo usan como id_actividad.
+        id: z.uuid('Identificador inválido').optional(),
         nombre: z.string().trim().min(3, 'El nombre debe tener al menos 3 caracteres').max(150),
         fecha: z
             .string()
@@ -52,6 +55,10 @@ const registrarAsistenciaSchema = z.object({
             .max(120, 'La edad no es válida'),
         genero: z.enum(GENEROS, { message: 'Género inválido' }),
         barrio: z.string().trim().min(1, 'El barrio es obligatorio').max(100),
+        // Momento real del registro cuando se tomó sin conexión (ISO 8601).
+        fechaRegistro: z.iso
+            .datetime({ offset: true, message: 'fechaRegistro debe ser una fecha ISO' })
+            .optional(),
     }),
     params: idParams,
     query: z.object({}),

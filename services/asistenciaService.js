@@ -14,14 +14,23 @@ const buscarPersona = async (membresia, documento) => {
     return persona;
 };
 
-const crearActividad = (membresia, data) =>
-    asistenciaRepository.crearActividad({
+const crearActividad = async (membresia, data) => {
+    const actividad = await asistenciaRepository.crearActividad({
+        id: data.id ?? null,
         organizacionId: membresia.organizacion_id,
         nombre: data.nombre,
         fecha: data.fecha,
         barrio: data.barrio,
         creadoPor: membresia.usuario_id,
     });
+
+    if (!actividad) {
+        // El UUID enviado ya existe pero pertenece a otra organización.
+        throw new AppError('El identificador de la actividad ya está en uso', 409);
+    }
+
+    return actividad;
+};
 
 const listarActividades = (membresia) =>
     asistenciaRepository.listarActividades(membresia.organizacion_id);

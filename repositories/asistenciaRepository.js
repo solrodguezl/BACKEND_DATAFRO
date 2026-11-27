@@ -39,11 +39,18 @@ const COLUMNAS_ACTIVIDAD = `
     COUNT(s.id_asistencia)::int AS total_asistentes
 `;
 
-const crearActividad = async ({ organizacionId, nombre, fecha, barrio, creadoPor }) => {
+/**
+ * Si llega `id` (UUID generado en el teléfono para una actividad creada sin
+ * conexión) se usa como llave; un reenvío con el mismo id no duplica la
+ * actividad sino que devuelve la existente. Devuelve null si ese id ya existe
+ * en otra organización.
+ */
+const crearActividad = async ({ id, organizacionId, nombre, fecha, barrio, creadoPor }) => {
     const result = await pool.query(
         `
-        INSERT INTO actividad (id_organizacion, id_usuario_responsable, nombre, fecha, lugar)
-        VALUES ($1, $2, $3, COALESCE($4::date, CURRENT_DATE), $5)
+        INSERT INTO actividad (id_actividad, id_organizacion, id_usuario_responsable, nombre, fecha, lugar)
+        VALUES (COALESCE($6::uuid, uuid_generate_v4()), $1, $2, $3, COALESCE($4::date, CURRENT_DATE), $5)
+        ON CONFLICT (id_actividad) DO NOTHING
         RETURNING
             id_actividad,
             nombre,
@@ -51,10 +58,15 @@ const crearActividad = async ({ organizacionId, nombre, fecha, barrio, creadoPor
             lugar AS barrio,
             0 AS total_asistentes
         `,
-        [organizacionId, creadoPor, nombre, fecha ?? null, barrio ?? null]
+        [organizacionId, creadoPor, nombre, fecha ?? null, barrio ?? null, id ?? null]
     );
 
-    return result.rows[0];
+    if (result.rows[0]) {
+        return result.rows[0];
+    }
+
+    // Ya existía (reenvío desde la cola offline): se devuelve solo si es de esta organización.
+    return id ? obtenerActividad(organizacionId, id) : null;
 };
 
 const listarActividades = async (organizacionId) => {
@@ -194,12 +206,18 @@ const registrarAsistencia = async ({
         const asistencia = await client.query(
             `
             INSERT INTO asistencia (
-                id_persona, id_actividad, id_usuario, sincronizado, fecha_sincronizacion
+                id_persona, id_actividad, id_usuario, fecha_hora_registro,
+                sincronizado, fecha_sincronizacion
             )
-            VALUES ($1, $2, $3, true, CURRENT_TIMESTAMP)
+            VALUES (
+                $1, $2, $3,
+                -- Hora real del registro si se tomó offline; nunca en el futuro.
+                LEAST(COALESCE($4::timestamptz, now()), now()),
+                true, CURRENT_TIMESTAMP
+            )
             RETURNING id_asistencia, fecha_hora_registro AS fecha_registro
             `,
-            [idPersona, actividadId, registradoPor]
+            [idPersona, actividadId, registradoPor, persona.fechaRegistro ?? null]
         );
 
         const personaGuardada = await client.query(
